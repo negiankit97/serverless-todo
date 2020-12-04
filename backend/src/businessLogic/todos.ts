@@ -6,8 +6,11 @@ import {
 
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
 import { TodoUpdate } from '../models/TodoUpdate';
+import {createLogger} from '../utils/logger';
 
 import * as uuid from 'uuid'
+
+const logger = createLogger('todosBusinessLogic');
 
 const todosAccess = new TodosAccess();
 
@@ -21,7 +24,7 @@ export async function createTodo(
 ): Promise<TodoItem> {
   const todoId = uuid.v4()
 
-  console.log('UserId ' + userId);
+  logger.info('UserId ' + userId);
 
   return todosAccess.createTodo({
     userId: userId,
