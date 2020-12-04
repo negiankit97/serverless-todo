@@ -2,18 +2,18 @@ import * as AWS from 'aws-sdk'
 import * as AWSXRay from 'aws-xray-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 
-import { TodoItem } from '../models/TodoItem';
-import { TodoUpdate } from '../models/TodoUpdate';
-import { createLogger } from '../utils/logger';
+import { TodoItem } from '../models/TodoItem'
+import { TodoUpdate } from '../models/TodoUpdate'
+import { createLogger } from '../utils/logger'
 
-const XAWS = AWSXRay.captureAWS(AWS);
+const XAWS = AWSXRay.captureAWS(AWS)
 
 const s3 = new XAWS.S3({
-  signatureVersion: 'v4',
-});
+  signatureVersion: 'v4'
+})
 
-const logger = createLogger('todo');
-const urlExpiration = process.env.SIGNED_URL_EXPIRATION;
+const logger = createLogger('todo')
+const urlExpiration = process.env.SIGNED_URL_EXPIRATION
 
 export class TodosAccess {
   constructor(
@@ -33,7 +33,7 @@ export class TodosAccess {
       })
       .promise()
 
-    logger.info("Todo retrieved successfully");
+    logger.info('Todo retrieved successfully')
 
     const todos = result.Items
 
@@ -47,19 +47,21 @@ export class TodosAccess {
       })
       .promise()
 
-    return todo;
+    return todo
   }
 
-  async deleteTodo(userId:string, todoId: string): Promise<string> {
-    await this.docClient.delete({
-      TableName: this.todoTable,
-      Key: {
-        userId,
-        todoId
-      }
-    }).promise();
+  async deleteTodo(userId: string, todoId: string): Promise<string> {
+    await this.docClient
+      .delete({
+        TableName: this.todoTable,
+        Key: {
+          userId,
+          todoId
+        }
+      })
+      .promise()
 
-    logger.info("delete successfull");
+    logger.info('delete successfull')
 
     return todoId
   }
@@ -71,56 +73,56 @@ export class TodosAccess {
     var params = {
       TableName: this.todoTable,
       Key: {
-          userId: userId,
-          todoId: todoId
+        userId: userId,
+        todoId: todoId
       },
-      UpdateExpression: "set #n = :r, dueDate=:p, done=:a",
+      UpdateExpression: 'set #n = :r, dueDate=:p, done=:a',
       ExpressionAttributeValues: {
-          ":r": todoUpdate.name,
-          ":p": todoUpdate.dueDate,
-          ":a": todoUpdate.done
+        ':r': todoUpdate.name,
+        ':p': todoUpdate.dueDate,
+        ':a': todoUpdate.done
       },
       ExpressionAttributeNames: {
-          "#n": "name"
+        '#n': 'name'
       },
-      ReturnValues: "UPDATED_NEW"
-  };
+      ReturnValues: 'UPDATED_NEW'
+    }
 
-  await this.docClient.update(params).promise()
-  logger.info("Update was successful");
-  return todoUpdate;
-}
+    await this.docClient.update(params).promise()
+    logger.info('Update was successful')
+    return todoUpdate
+  }
 
-async generateUploadUrl(userId: string, todoId: string): Promise<String> {
-  const url = getUploadUrl(todoId, this.bucketName)
+  async generateUploadUrl(userId: string, todoId: string): Promise<String> {
+    const url = getUploadUrl(todoId, this.bucketName)
 
-  const attachmentUrl: string = 'https://' + this.bucketName + '.s3.amazonaws.com/' + todoId
+    const attachmentUrl: string =
+      'https://' + this.bucketName + '.s3.amazonaws.com/' + todoId
 
-  const options = {
+    const options = {
       TableName: this.todoTable,
       Key: {
-          userId: userId,
-          todoId: todoId
+        userId: userId,
+        todoId: todoId
       },
-      UpdateExpression: "set attachmentUrl = :r",
+      UpdateExpression: 'set attachmentUrl = :r',
       ExpressionAttributeValues: {
-          ":r": attachmentUrl
+        ':r': attachmentUrl
       },
-      ReturnValues: "UPDATED_NEW"
-  };
+      ReturnValues: 'UPDATED_NEW'
+    }
 
-  await this.docClient.update(options).promise()
-  logger.info("Presigned url generated successfully ", url)
+    await this.docClient.update(options).promise()
+    logger.info('Presigned url generated successfully ', url)
 
-  return url;
-}
-
+    return url
+  }
 }
 
 function getUploadUrl(todoId: string, bucketName: string): string {
-return s3.getSignedUrl('putObject', {
-  Bucket: bucketName,
-  Key: todoId,
-  Expires: parseInt(urlExpiration)
-})
+  return s3.getSignedUrl('putObject', {
+    Bucket: bucketName,
+    Key: todoId,
+    Expires: parseInt(urlExpiration)
+  })
 }
