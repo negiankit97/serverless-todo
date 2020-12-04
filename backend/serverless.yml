@@ -5,6 +5,7 @@ plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
 
 package:
   individually: true
@@ -23,6 +24,18 @@ provider:
     TODOS_INDEX_NAME: TodoIdIndex
     SIGNED_URL_EXPIRATION: 300
     IMAGES_S3_BUCKET: serverless-todo-bucket-ankit-${self:provider.stage}
+
+custom:
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Serverless Todo
+        description: Serverless application for todo tasks 
+    models:
+      - name: CreateTodoRequest
+        contentType: application/json
+        schema: ${file(models/create-todo-request.json)}
 
 functions:
   Auth:
@@ -93,12 +106,6 @@ functions:
           authorizer: Auth
           path: todos/{todoId}
           cors: true
-          reqValidatorName: RequestBodyValidator
-          documentation:
-            summary: Update todo task
-            description: Update an existing todo task
-            requestModels:
-              'application/json': UpdateTodoRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
